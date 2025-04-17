@@ -1,0 +1,26 @@
+/* Variables personnalisées */
+:root {
+    --primary-color: #008751; /* Vert du drapeau guinéen */
+    --secondary-color: #FCD116; /* Jaune du drapeau guinéen */
+    --accent-color: #CE1126; /* Rouge du drapeau guinéen */
+  }
+  
+  /* Styles personnalisés */
+  .btn-guinea {
+    background-color: var(--primary-color);
+    color: white;
+    transition: all 0.3s ease;
+  }
+  
+  .btn-guinea:hover {
+    background-color: darken(var(--primary-color), 10%);
+  }
+  
+  .election-card {
+    border-left: 4px solid var(--primary-color);
+    transition: transform 0.2s;
+  }
+  
+  .election-card:hover {
+    transform: translateY(-5px);
+  }
