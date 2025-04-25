@@ -27,4 +27,9 @@ $router->addRoute('GET', '/dashboard/admin', 'DashboardController@admin');
 $router->addRoute('GET', '/dashboard/electeur', 'DashboardController@electeur');
 $router->addRoute('GET', '/dashboard/observateur', 'DashboardController@observateur');
 
+// Routes des élections
+$router->addRoute('GET', '/elections', 'ElectionController@index');
+$router->addRoute('GET', '/elections/create', 'ElectionController@create');
+$router->addRoute('POST', '/elections/store', 'ElectionController@store');
+
 $router->dispatch();

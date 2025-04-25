@@ -8,7 +8,7 @@
                 </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link" href="<?= BASE_URL ?>/elections">
+                <a class="nav-link" href="<?= BASE_URL ?>/views/elections/liste">
                     <i class="bi bi-calendar3"></i>
                     Élections
                 </a>
