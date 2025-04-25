@@ -1,0 +1,41 @@
+.php
+<?php
+class Router {
+    private $routes = [];
+
+    public function addRoute($method, $path, $handler) {
+        $this->routes[] = [
+            'method' => $method,
+            'path' => $path,
+            'handler' => $handler
+        ];
+    }
+
+    public function dispatch() {
+        $requestMethod = $_SERVER['REQUEST_METHOD'];
+        $requestUri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+        
+        // Debug
+        error_log("Request URI: " . $requestUri);
+        
+        // Remove base path from URI
+        $basePath = '/phpProject';
+        $requestPath = str_replace($basePath, '', $requestUri);
+        
+        // Debug
+        error_log("Processed Path: " . $requestPath);
+        
+        foreach ($this->routes as $route) {
+            error_log("Checking route: " . $route['path']);
+            if ($route['method'] === $requestMethod && $route['path'] === $requestPath) {
+                list($controller, $method) = explode('@', $route['handler']);
+                $controllerInstance = new $controller();
+                return $controllerInstance->$method();
+            }
+        }
+        
+        // Route not found
+        header("HTTP/1.0 404 Not Found");
+        echo "Route not found: " . $requestPath;
+    }
+}
