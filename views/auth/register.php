@@ -16,7 +16,11 @@ require_once __DIR__ . '/../../views/layout/header.php';
                         <div class="alert alert-danger"><?= $error ?></div>
                     <?php endif; ?>
                     
-                    <form action="<?= BASE_URL ?>/controllers/auth/register_process.php" method="POST">
+                    <form action="<?= BASE_URL ?>/public/auth/register" method="POST">
+                        <div class="mb-3">
+                            <label for="identifiant" class="form-label">Identifiant:</label>
+                            <input type="text" class="form-control" id="identifiant" name="identifiant" required>
+                        </div>
                         <div class="mb-3">
                             <label for="nom" class="form-label">Nom complet</label>
                             <input type="text" class="form-control" id="nom" name="nom" required>
@@ -61,7 +65,7 @@ require_once __DIR__ . '/../../views/layout/header.php';
                 </div>
                 <div class="card-footer text-center">
                     <p class="mb-0">Déjà inscrit ? 
-                        <a href="<?= BASE_URL ?>/auth/login">Se connecter</a>
+                        <a href="<?= BASE_URL ?>/public/auth/login">Se connecter</a>
                     </p>
                 </div>
             </div>

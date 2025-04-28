@@ -12,7 +12,7 @@ require_once __DIR__ . '/../../views/layout/header.php';
             <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
                 <h1 class="h2">Gestion des Élections</h1>
                 <div class="btn-toolbar mb-2 mb-md-0">
-                    <a href="<?= BASE_URL ?>/elections/create" class="btn btn-primary">
+                    <a href="<?= BASE_URL ?>/views/elections/create" class="btn btn-primary">
                         <i class="bi bi-plus"></i> Nouvelle Élection
                     </a>
                 </div>
@@ -48,7 +48,7 @@ require_once __DIR__ . '/../../views/layout/header.php';
                                         </span>
                                     </td>
                                     <td>
-                                        <a href="<?= BASE_URL ?>/elections/edit/<?= $election['id'] ?>" 
+                                        <a href="<?= BASE_URL ?>/public/elections/edit/<?= $election['id'] ?>" 
                                            class="btn btn-sm btn-primary">
                                             <i class="bi bi-pencil"></i>
                                         </a>

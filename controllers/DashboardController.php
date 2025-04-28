@@ -7,6 +7,10 @@ class DashboardController extends Controller {
     public function __construct() {
         $this->db = new Database();
         $this->conn = $this->db->getConnection();
+        if (!isset($_SESSION['user_id'])) {
+            header('Location: ' . BASE_URL . '/public/auth/login');
+            exit();
+        }
     }
 
     public function index() {
@@ -31,5 +35,17 @@ class DashboardController extends Controller {
                 header('Location: ' . BASE_URL . '/auth/login');
                 exit;
         }
+    }
+
+    public function adminDashboard() {
+        if ($_SESSION['user_role'] !== 'admin') {
+            header('Location: ' . BASE_URL . '/public/auth/login');
+            exit();
+        }
+        return $this->view('dashboard/admin');
+    }
+
+    public function userDashboard() {
+        return $this->view('dashboard/user');
     }
 }

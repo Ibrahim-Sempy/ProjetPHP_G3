@@ -8,7 +8,7 @@ define('DB_NAME', 'elections');
 // URLs et nom de l'application
 // Base URL of your application
 // Define base URL (adjust according to your local setup)
-define('BASE_URL', 'http://localhost/phpProject');
+define('BASE_URL', '/phpProject');
 
 // Define application name
 define('APP_NAME', 'phpProject');

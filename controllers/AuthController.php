@@ -1,4 +1,6 @@
 <?php
+require_once __DIR__ . '/../core/Controller.php';
+
 class AuthController extends Controller {
     private $db;
     private $conn;
@@ -7,121 +9,163 @@ class AuthController extends Controller {
         $this->db = new Database();
         $this->conn = $this->db->getConnection();
     }
-    
+
     public function showLogin() {
-        $this->view('auth/login');
+        return $this->view('auth/login');
     }
 
-    public function showRegister() {
-        $this->view('auth/register');
-    }
+    // Removed duplicate showRegister method to resolve the error.
 
     public function login() {
+        // Si déjà connecté, rediriger vers le dashboard approprié
+        if (isset($_SESSION['user_id'])) {
+            if ($_SESSION['user_role'] === 'admin') {
+                header('Location: ' . BASE_URL . '/public/dashboard/admin');
+            } else {
+                header('Location: ' . BASE_URL . '/public/dashboard/user');
+            }
+            exit();
+        }
+
+        // Traitement du formulaire de connexion
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $identifiant = filter_input(INPUT_POST, 'identifiant', FILTER_SANITIZE_STRING);
             $email = filter_input(INPUT_POST, 'email', FILTER_SANITIZE_EMAIL);
             $password = $_POST['password'];
 
             try {
-                $stmt = $this->conn->prepare("SELECT id, email, mot_de_passe, role FROM utilisateurs WHERE email = ?");
-                $stmt->execute([$email]);
+                // Debug log
+                error_log("Login attempt for identifiant: {$identifiant}, email: {$email}");
+
+                $stmt = $this->conn->prepare(
+                    "SELECT * FROM utilisateurs 
+                     WHERE email = ? 
+                     AND Nid = ? 
+                     AND statut = TRUE"
+                );
+                $stmt->execute([$email, $identifiant]);
                 $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
                 if ($user && password_verify($password, $user['mot_de_passe'])) {
-                    // Stockage des informations de session
+                    // Set session data
                     $_SESSION['user_id'] = $user['id'];
-                    $_SESSION['user_email'] = $user['email'];
+                    $_SESSION['user_name'] = $user['nom'];
                     $_SESSION['user_role'] = $user['role'];
+                    $_SESSION['user_identifiant'] = $user['identifiant'];
+                    $_SESSION['logged_in'] = true;
 
-                    // Redirection basée sur le rôle
+                    // Debug log
+                    error_log("User authenticated successfully. Role: " . $user['role']);
+                    error_log("Session data: " . print_r($_SESSION, true));
+
+                    // Redirect based on role
                     switch($user['role']) {
                         case 'admin':
-                            header('Location: ' . BASE_URL . '/dashboard/admin');
+                            header('Location: ' . BASE_URL . '/public/dashboard/admin');
                             break;
                         case 'electeur':
-                            header('Location: ' . BASE_URL . '/dashboard/electeur');
-                            break;
-                        case 'observateur':
-                            header('Location: ' . BASE_URL . '/dashboard/observateur');
+                            header('Location: ' . BASE_URL . '/public/dashboard/user');
                             break;
                         default:
-                            header('Location: ' . BASE_URL . '/dashboard');
+                            header('Location: ' . BASE_URL . '/public/dashboard/user');
                     }
                     exit();
-                } else {
-                    return $this->view('auth/login', ['error' => 'Email ou mot de passe incorrect']);
                 }
+
+                // Invalid credentials
+                error_log("Login failed for identifiant: {$identifiant}, email: {$email}");
+                return $this->view('auth/login', [
+                    'error' => 'Identifiant, email ou mot de passe incorrect'
+                ]);
+
             } catch(PDOException $e) {
-                error_log($e->getMessage());
-                return $this->view('auth/login', ['error' => 'Une erreur est survenue']);
+                error_log("Database error during login: " . $e->getMessage());
+                return $this->view('auth/login', [
+                    'error' => 'Erreur lors de la connexion'
+                ]);
             }
         }
-        
+
+        // Afficher le formulaire de connexion
         return $this->view('auth/login');
+    }
+
+    public function showRegister() {
+        return $this->view('auth/register');
     }
 
     public function register() {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $nom = filter_input(INPUT_POST, 'nom', FILTER_SANITIZE_STRING);
-            $email = filter_input(INPUT_POST, 'email', FILTER_SANITIZE_EMAIL);
-            $password = $_POST['password'];
-            $password_confirm = $_POST['password_confirm'];
-            $role = filter_input(INPUT_POST, 'role', FILTER_SANITIZE_STRING);
-            $date_naissance = filter_input(INPUT_POST, 'date_naissance', FILTER_SANITIZE_STRING);
-            $sexe = filter_input(INPUT_POST, 'sexe', FILTER_SANITIZE_STRING);
+            try {
+                // Sanitize and validate input
+                $identifiant = filter_input(INPUT_POST, 'identifiant', FILTER_SANITIZE_STRING);
+                $nom = filter_input(INPUT_POST, 'nom', FILTER_SANITIZE_STRING);
+                $email = filter_input(INPUT_POST, 'email', FILTER_SANITIZE_EMAIL);
+                $mot_de_passe = password_hash($_POST['mot_de_passe'], PASSWORD_DEFAULT);
+                $date_naissance = $_POST['date_naissance'];
+                $sexe = $_POST['sexe'];
+                // Set default role as 'electeur'
+                $rol = $_POST['role'];
 
-            // Validation
-            $errors = [];
-            if (!$nom || strlen($nom) < 3) {
-                $errors[] = "Le nom doit contenir au moins 3 caractères";
-            }
-            if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-                $errors[] = "Email invalide";
-            }
-            if (strlen($password) < 6) {
-                $errors[] = "Le mot de passe doit contenir au moins 6 caractères";
-            }
-            if ($password !== $password_confirm) {
-                $errors[] = "Les mots de passe ne correspondent pas";
-            }
+                // Debug log
+                error_log("Processing registration for email: " . $email);
 
-            if (empty($errors)) {
-                try {
-                    // Maintenant $this->conn est défini
-                    $stmt = $this->conn->prepare("SELECT id FROM utilisateurs WHERE email = ?");
-                    $stmt->execute([$email]);
-                    if ($stmt->fetch()) {
-                        return $this->view('auth/register', ['error' => 'Cet email est déjà utilisé']);
-                    }
+                // Vérifier si l'email existe déjà
+                $stmt = $this->conn->prepare("SELECT COUNT(*) FROM utilisateurs WHERE email = ?");
+                $stmt->execute([$email]);
+                $emailExists = $stmt->fetchColumn();
 
-                    // Insertion de l'utilisateur
-                    $stmt = $this->conn->prepare("
-                        INSERT INTO utilisateurs (nom, email, mot_de_passe, role, date_naissance, sexe)
-                        VALUES (?, ?, ?, ?, ?, ?)
-                    ");
-                    
-                    $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
-                    $stmt->execute([
-                        $nom,
-                        $email,
-                        $hashedPassword,
-                        $role,
-                        $date_naissance,
-                        $sexe
+                if ($emailExists) {
+                    error_log("Email already exists: " . $email);
+                    return $this->view('auth/register', [
+                        'error' => 'Cet email est déjà utilisé.'
                     ]);
-
-                    $this->redirect('/auth/login');
-                } catch (PDOException $e) {
-                    error_log($e->getMessage());
-                    return $this->view('auth/register', ['error' => 'Une erreur est survenue']);
                 }
-            } else {
-                return $this->view('auth/register', ['error' => implode('<br>', $errors)]);
+
+                // Insérer l'utilisateur dans la base de données
+                $sql = "INSERT INTO utilisateurs (Nid, nom, email, mot_de_passe, date_naissance, sexe, role, statut) 
+                        VALUES (?, ?, ?, ?, ?, ?, ?, TRUE)";
+                
+                $stmt = $this->conn->prepare($sql);
+                $result = $stmt->execute([
+                    $identifiant,
+                    $nom,
+                    $email,
+                    $mot_de_passe,
+                    $date_naissance,
+                    $sexe,
+                    $rol
+                ]);
+
+                if ($result) {
+                    error_log("User registered successfully: " . $email);
+                    $_SESSION['success'] = "Inscription réussie. Veuillez vous connecter.";
+                    header('Location: ' . BASE_URL . '/public/auth/login');
+                    exit();
+                } else {
+                    error_log("Database insert failed for email: " . $email);
+                    throw new PDOException("Database insert failed");
+                }
+
+            } catch(PDOException $e) {
+                error_log("Registration error: " . $e->getMessage());
+                return $this->view('auth/register', [
+                    'error' => 'Une erreur est survenue lors de l\'inscription'
+                ]);
             }
         }
+        return $this->view('auth/register');
     }
 
     public function logout() {
+        // Clear session
         session_destroy();
-        $this->redirect('/');
+        
+        // Clear remember me cookie if exists
+        if (isset($_COOKIE['remember_token'])) {
+            setcookie('remember_token', '', time() - 3600, '/');
+        }
+        
+        return $this->redirect('/auth/login');
     }
 }

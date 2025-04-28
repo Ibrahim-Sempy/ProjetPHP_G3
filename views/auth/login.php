@@ -13,10 +13,18 @@ require_once __DIR__ . '/../../views/layout/header.php';
                 </div>
                 <div class="card-body">
                     <?php if(isset($error)): ?>
-                        <div class="alert alert-danger"><?= $error ?></div>
+                        <div class="alert alert-danger"><?= htmlspecialchars($error) ?></div>
                     <?php endif; ?>
                     
-                    <form action="<?= BASE_URL ?>/views/dashboard/admin" method="POST">
+                    <form action="<?= BASE_URL ?>/public/auth/login" method="POST">
+                        <div class="mb-3">
+                            <label for="identifiant" class="form-label">Identifiant</label>
+                            <input type="text" 
+                                   class="form-control" 
+                                   id="identifiant"
+                                   name="identifiant" 
+                                   required>
+                        </div>
                         <div class="mb-3">
                             <label for="email" class="form-label">Email</label>
                             <input type="email" 
@@ -44,7 +52,7 @@ require_once __DIR__ . '/../../views/layout/header.php';
                 </div>
                 <div class="card-footer text-center">
                     <p class="mb-0">Pas encore de compte ? 
-                        <a href="<?= BASE_URL ?>/views/auth/register">S'inscrire</a>
+                        <a href="<?= BASE_URL ?>/public/auth/register">S'inscrire</a>
                     </p>
                 </div>
             </div>

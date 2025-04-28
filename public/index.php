@@ -1,35 +1,52 @@
 <?php
-require_once '../config/config.php';
-require_once '../config/Database.php';
-require_once '../core/Router.php';
-require_once '../core/Controller.php';
-require_once '../controllers/AuthController.php';
-
-session_start();
+require_once __DIR__ . '/../bootstrap.php';
 
 $router = new Router();
 
-// Debug: Print the current URL
-error_log("Current URL: " . $_SERVER['REQUEST_URI']);
-
-// Define routes with leading slashes
-$router->addRoute('GET', '/', 'AuthController@showLogin');
+// Authentication routes (public)
+$router->addRoute('GET', '/', 'AuthController@login');
+$router->addRoute('GET', '/auth/login', 'AuthController@login');
+$router->addRoute('POST', '/auth/login', 'AuthController@login');
 $router->addRoute('GET', '/auth/register', 'AuthController@showRegister');
 $router->addRoute('POST', '/auth/register', 'AuthController@register');
+$router->addRoute('GET', '/auth/logout', 'AuthController@logout');
 
-// Routes d'authentification
-$router->addRoute('GET', '/auth/login', 'AuthController@showLogin');
-$router->addRoute('POST', '/auth/login', 'AuthController@login');
+// Dashboard routes (protected)
+$router->addRoute('GET', '/dashboard', 'DashboardController@index'); // Main dashboard router
+$router->addRoute('GET', '/dashboard/admin', 'DashboardController@adminDashboard');
+$router->addRoute('GET', '/dashboard/user', 'DashboardController@userDashboard');
+$router->addRoute('GET', '/dashboard/electeur', 'ElecteurController@dashboard');
 
-// Routes du dashboard
-$router->addRoute('GET', '/dashboard', 'DashboardController@index');
-$router->addRoute('GET', '/dashboard/admin', 'DashboardController@admin');
-$router->addRoute('GET', '/dashboard/electeur', 'DashboardController@electeur');
-$router->addRoute('GET', '/dashboard/observateur', 'DashboardController@observateur');
+// Electeur routes (protected)
+$router->addRoute('GET', '/elections/en-cours', 'ElecteurController@electionsEnCours');
+$router->addRoute('GET', '/elections/a-venir', 'ElecteurController@electionsAVenir');
+$router->addRoute('GET', '/mes-votes', 'ElecteurController@mesVotes');
+$router->addRoute('GET', '/profile', 'ElecteurController@profile');
+$router->addRoute('GET', '/notifications', 'ElecteurController@notifications');
 
-// Routes des élections
+// Admin routes (protected)
 $router->addRoute('GET', '/elections', 'ElectionController@index');
 $router->addRoute('GET', '/elections/create', 'ElectionController@create');
 $router->addRoute('POST', '/elections/store', 'ElectionController@store');
+$router->addRoute('GET', '/elections/edit/{id}', 'ElectionController@edit');
+$router->addRoute('POST', '/elections/update/{id}', 'ElectionController@update');
+$router->addRoute('GET', '/elections/delete/{id}', 'ElectionController@delete');
+
+$router->addRoute('GET', '/users', 'UserController@index');
+$router->addRoute('GET', '/users/create', 'UserController@create');
+$router->addRoute('POST', '/users/store', 'UserController@store');
+$router->addRoute('GET', '/users/edit/{id}', 'UserController@edit');
+$router->addRoute('POST', '/users/update/{id}', 'UserController@update');
+$router->addRoute('GET', '/users/delete/{id}', 'UserController@delete');
+
+$router->addRoute('GET', '/candidats', 'CandidatController@index');
+$router->addRoute('GET', '/candidats/create', 'CandidatController@create');
+$router->addRoute('POST', '/candidats/store', 'CandidatController@store');
+$router->addRoute('GET', '/candidats/edit/{id}', 'CandidatController@edit');
+$router->addRoute('POST', '/candidats/update/{id}', 'CandidatController@update');
+$router->addRoute('GET', '/candidats/delete/{id}', 'CandidatController@delete');
+$router->addRoute('GET', '/candidats/validate/{id}', 'CandidatController@validate');
+
+$router->addRoute('GET', '/rapports', 'RapportController@index');
 
 $router->dispatch();
